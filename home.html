@@ -2,37 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Home</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <script src="supabase.js"></script>
-  <script src="app.js" defer></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
-      padding: 20px;
-    }
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    button {
-      padding: 8px 15px;
-      cursor: pointer;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div class="top-bar">
-    <h2>Welcome to Home Page</h2>
-    <button onclick="logout()">Logout</button>
+<body class="light">
+  <!-- Hamburger Menu -->
+  <div id="menu-btn">☰</div>
+  <div id="side-menu" class="hidden">
+    <a href="https://instagram.com/abhay___r" target="_blank">Instagram</a>
+    <a href="https://snapchat.com/add/abhayr38" target="_blank">Snapchat</a>
+    <button id="logout-btn">Logout</button>
   </div>
 
-  <div id="features">
-    <!-- ✨ Future features (Add Post, Like, Comment, Dark Mode) will go here -->
+  <!-- Profile -->
+  <div id="profile-section">
+    <img src="https://i.postimg.cc/Zn358ZjF/Snapchat-620299345.jpg" alt="Profile" id="profile-pic">
   </div>
+
+  <!-- Feed -->
+  <div id="feed">
+    <h2>Posts</h2>
+    <div id="posts-container"></div>
+  </div>
+
+  <!-- Admin Controls -->
+  <div id="admin-controls" class="hidden">
+    <textarea id="post-text" placeholder="Write something..."></textarea>
+    <input type="file" id="post-image">
+    <button id="add-post-btn">Add Post</button>
+    <button id="delete-post-btn">Delete Last Post</button>
+  </div>
+
+  <!-- Dark Mode Toggle -->
+  <div id="dark-mode-toggle">🌙</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="supabase.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
