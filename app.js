@@ -1,7 +1,5 @@
-// app.js
-
-// Check user on page load
-supabase.auth.onAuthStateChange(async (event, session) => {
+// ✅ Check session on load
+supabase.auth.getSession().then(({ data: { session } }) => {
   if (!session) {
     window.location.href = "index.html"; // redirect if not logged in
   } else {
@@ -10,23 +8,42 @@ supabase.auth.onAuthStateChange(async (event, session) => {
   }
 });
 
-// Show admin-only controls
+// ✅ Listen for login/logout changes
+supabase.auth.onAuthStateChange((_event, session) => {
+  if (!session) {
+    window.location.href = "index.html";
+  } else {
+    loadPosts();
+    showAdminControls(session.user.email);
+  }
+});
+
+// ✅ Show admin-only UI
 function showAdminControls(email) {
+  const addCircle = document.getElementById("add-post-circle");
+  const addBtn = document.getElementById("add-post-btn");
+  const delBtn = document.getElementById("delete-post-btn");
+
   if (email === "abhayrangappanvat@gmail.com") {
-    document.getElementById("add-post-btn").style.display = "block";
-    document.getElementById("delete-post-btn").style.display = "block";
-    document.getElementById("add-post-circle").style.display = "flex";
+    addCircle.style.display = "flex";
+    addBtn.style.display = "block";
+    delBtn.style.display = "block";
+  } else {
+    addCircle.style.display = "none";
+    addBtn.style.display = "none";
+    delBtn.style.display = "none";
   }
 }
 
-// Add Post
+// ✅ Add Post
 document.getElementById("add-post-btn")?.addEventListener("click", async () => {
   const text = document.getElementById("post-text").value;
   const file = document.getElementById("post-image").files[0];
   let imageUrl = "";
 
   if (file) {
-    const { data, error } = await supabase.storage.from("images").upload(`posts/${Date.now()}-${file.name}`, file);
+    const { data, error } = await supabase.storage.from("images")
+      .upload(`posts/${Date.now()}-${file.name}`, file);
     if (error) {
       alert("Image upload failed");
       return;
@@ -44,12 +61,15 @@ document.getElementById("add-post-btn")?.addEventListener("click", async () => {
   } else {
     document.getElementById("post-text").value = "";
     document.getElementById("post-image").value = "";
+    loadPosts();
   }
 });
 
-// Load Posts
+// ✅ Load Posts
 async function loadPosts() {
-  const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+  const { data, error } = await supabase.from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error(error);
@@ -59,18 +79,22 @@ async function loadPosts() {
   const container = document.getElementById("posts-container");
   container.innerHTML = "";
 
+  // check current session for admin rights
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAdmin = session?.user?.email === "abhayrangappanvat@gmail.com";
+
   data.forEach((post) => {
     const div = document.createElement("div");
     div.classList.add("post");
     div.innerHTML = `
       <p>${post.text}</p>
       ${post.image_url ? `<img src="${post.image_url}" alt="post image" />` : ""}
-      ${post.author === "admin" ? `<button class="delete-btn" data-id="${post.id}">Delete</button>` : ""}
+      ${isAdmin ? `<button class="delete-btn" data-id="${post.id}">Delete</button>` : ""}
     `;
     container.appendChild(div);
   });
 
-  // Attach delete button events
+  // attach delete events
   document.querySelectorAll(".delete-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       const id = e.target.dataset.id;
@@ -84,24 +108,24 @@ async function loadPosts() {
   });
 }
 
-// Logout
+// ✅ Logout
 document.getElementById("logout-btn")?.addEventListener("click", async () => {
   await supabase.auth.signOut();
   window.location.href = "index.html";
 });
 
-// Menu toggle
+// ✅ Menu toggle
 document.getElementById("menu-btn")?.addEventListener("click", () => {
   document.getElementById("side-menu").classList.toggle("hidden");
 });
 
-// Dark mode toggle
+// ✅ Dark mode
 document.getElementById("dark-mode-toggle")?.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   document.body.classList.toggle("light");
 });
 
-// Floating + button (open editor)
+// ✅ Floating + button → toggle editor
 document.getElementById("add-post-circle")?.addEventListener("click", () => {
   document.getElementById("admin-controls").classList.toggle("hidden");
 });
