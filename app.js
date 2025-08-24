@@ -1,14 +1,14 @@
-// ✅ Check session on load
+    // On load check session
 supabase.auth.getSession().then(({ data: { session } }) => {
   if (!session) {
-    window.location.href = "index.html"; // redirect if not logged in
+    window.location.href = "index.html";
   } else {
     loadPosts();
     showAdminControls(session.user.email);
   }
 });
 
-// ✅ Listen for login/logout changes
+// Watch login/logout
 supabase.auth.onAuthStateChange((_event, session) => {
   if (!session) {
     window.location.href = "index.html";
@@ -18,24 +18,20 @@ supabase.auth.onAuthStateChange((_event, session) => {
   }
 });
 
-// ✅ Show admin-only UI
+// Show admin-only
 function showAdminControls(email) {
   const addCircle = document.getElementById("add-post-circle");
   const addBtn = document.getElementById("add-post-btn");
   const delBtn = document.getElementById("delete-post-btn");
 
   if (email === "abhayrangappanvat@gmail.com") {
-    addCircle.style.display = "flex";
+    addCircle.classList.remove("hidden");
     addBtn.style.display = "block";
     delBtn.style.display = "block";
-  } else {
-    addCircle.style.display = "none";
-    addBtn.style.display = "none";
-    delBtn.style.display = "none";
   }
 }
 
-// ✅ Add Post
+// Add Post
 document.getElementById("add-post-btn")?.addEventListener("click", async () => {
   const text = document.getElementById("post-text").value;
   const file = document.getElementById("post-image").files[0];
@@ -53,7 +49,7 @@ document.getElementById("add-post-btn")?.addEventListener("click", async () => {
   }
 
   const { error } = await supabase.from("posts").insert([
-    { text, image_url: imageUrl, author: "admin" }
+    { text, image_url: imageUrl, author: email }
   ]);
 
   if (error) {
@@ -65,21 +61,17 @@ document.getElementById("add-post-btn")?.addEventListener("click", async () => {
   }
 });
 
-// ✅ Load Posts
+// Load Posts
 async function loadPosts() {
   const { data, error } = await supabase.from("posts")
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+  if (error) return console.error(error);
 
   const container = document.getElementById("posts-container");
   container.innerHTML = "";
 
-  // check current session for admin rights
   const { data: { session } } = await supabase.auth.getSession();
   const isAdmin = session?.user?.email === "abhayrangappanvat@gmail.com";
 
@@ -94,38 +86,34 @@ async function loadPosts() {
     container.appendChild(div);
   });
 
-  // attach delete events
+  // delete post events
   document.querySelectorAll(".delete-btn").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
       const id = e.target.dataset.id;
       const { error } = await supabase.from("posts").delete().eq("id", id);
-      if (error) {
-        alert("Error deleting post");
-      } else {
-        loadPosts();
-      }
+      if (!error) loadPosts();
     });
   });
 }
 
-// ✅ Logout
+// Logout
 document.getElementById("logout-btn")?.addEventListener("click", async () => {
   await supabase.auth.signOut();
   window.location.href = "index.html";
 });
 
-// ✅ Menu toggle
+// Menu toggle
 document.getElementById("menu-btn")?.addEventListener("click", () => {
   document.getElementById("side-menu").classList.toggle("hidden");
 });
 
-// ✅ Dark mode
+// Dark mode
 document.getElementById("dark-mode-toggle")?.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   document.body.classList.toggle("light");
 });
 
-// ✅ Floating + button → toggle editor
+// Floating + button
 document.getElementById("add-post-circle")?.addEventListener("click", () => {
   document.getElementById("admin-controls").classList.toggle("hidden");
 });
