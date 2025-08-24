@@ -1,89 +1,155 @@
 // home.js
 
-// Redirect if not logged in
-supabase.auth.onAuthStateChange(async (event, session) => {
+// ---- CONFIG ----
+const ADMIN_EMAIL = "abhayrangappanvat@gmail.com";
+const IMAGES_BUCKET = "images"; // must exist and be public
+
+// ---- STATE ----
+let currentEmail = null;
+let isAdmin = false;
+
+// ---- AUTH GATE + UI SETUP ----
+supabase.auth.onAuthStateChange(async (_event, session) => {
   if (!session) {
+    // Not logged in -> back to login
     window.location.href = "index.html";
-  } else {
-    loadPosts();
-    checkAdmin(session.user.email);
+    return;
   }
+  currentEmail = session.user.email || "";
+  isAdmin = currentEmail === ADMIN_EMAIL;
+
+  setupAdminUI();
+  await loadPosts();
 });
 
-// Show admin-only UI if logged in as admin
-function checkAdmin(email) {
-  if (email === "abhayrangappanvat@gmail.com") {
-    document.getElementById("add-post-circle").classList.remove("hidden");
+// Show/hide admin bits
+function setupAdminUI() {
+  const addCircle = document.getElementById("add-post-circle");
+  const editor = document.getElementById("admin-controls");
+
+  // Always start hidden
+  editor.classList.add("hidden");
+
+  if (isAdmin) {
+    addCircle.style.display = "flex"; // admin sees the +
+  } else {
+    addCircle.style.display = "none";  // non-admin sees nothing
   }
 }
 
-// Toggle side menu
-document.getElementById("menu-btn").addEventListener("click", () => {
+// ---- UI HANDLERS ----
+document.getElementById("menu-btn")?.addEventListener("click", () => {
   document.getElementById("side-menu").classList.toggle("hidden");
 });
 
-// Logout
-document.getElementById("logout-btn").addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  window.location.href = "index.html";
-});
-
-// Dark mode toggle
-document.getElementById("dark-mode-toggle").addEventListener("click", () => {
+document.getElementById("dark-mode-toggle")?.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   document.body.classList.toggle("light");
 });
 
-// Floating + button toggles editor panel
-document.getElementById("add-post-circle").addEventListener("click", () => {
+document.getElementById("logout-btn")?.addEventListener("click", async () => {
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
+});
+
+// Toggle editor from the floating +
+document.getElementById("add-post-circle")?.addEventListener("click", () => {
+  if (!isAdmin) return; // ultra-safety
   document.getElementById("admin-controls").classList.toggle("hidden");
 });
 
-// Add Post
-document.getElementById("add-post-btn").addEventListener("click", async () => {
-  const text = document.getElementById("post-text").value;
-  const file = document.getElementById("post-image").files[0];
+// Add Post (admin only)
+document.getElementById("add-post-btn")?.addEventListener("click", async () => {
+  if (!isAdmin) {
+    alert("Only admin can add posts.");
+    return;
+  }
+
+  const textEl = document.getElementById("post-text");
+  const fileEl = document.getElementById("post-image");
+  const text = (textEl.value || "").trim();
+  const file = fileEl.files[0];
+
   let imageUrl = "";
 
+  // Upload image if chosen
   if (file) {
-    const { data, error } = await supabase.storage.from("images").upload(`posts/${Date.now()}-${file.name}`, file);
-    if (error) {
-      alert("Image upload failed");
+    const path = `posts/${Date.now()}-${file.name}`;
+    const { data: up, error: upErr } = await supabase
+      .storage
+      .from(IMAGES_BUCKET)
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+
+    if (upErr) {
+      alert("Image upload failed: " + upErr.message);
       return;
     }
-    const { data: publicUrl } = supabase.storage.from("images").getPublicUrl(data.path);
-    imageUrl = publicUrl.publicUrl;
+    const { data: p } = supabase.storage.from(IMAGES_BUCKET).getPublicUrl(up.path);
+    imageUrl = p.publicUrl;
   }
 
-  const { error } = await supabase.from("posts").insert([{ text, image_url: imageUrl }]);
-  if (error) {
-    alert("Error adding post: " + error.message);
-  } else {
-    document.getElementById("post-text").value = "";
-    document.getElementById("post-image").value = "";
-    loadPosts();
+  const { error: insErr } = await supabase.from("posts").insert([
+    { text, image_url: imageUrl, author: "admin" }
+  ]);
+
+  if (insErr) {
+    alert("Error adding post: " + insErr.message);
+    return;
   }
+
+  // clear inputs and hide editor
+  textEl.value = "";
+  fileEl.value = "";
+  document.getElementById("admin-controls").classList.add("hidden");
+  await loadPosts();
 });
 
-// Load Posts
+// ---- DATA ----
 async function loadPosts() {
-  const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+  const container = document.getElementById("posts-container");
+  container.innerHTML = "Loading...";
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (error) {
+    container.innerHTML = "Failed to load posts.";
     console.error(error);
     return;
   }
 
-  const container = document.getElementById("posts-container");
   container.innerHTML = "";
-
   data.forEach((post) => {
     const div = document.createElement("div");
-    div.classList.add("post");
+    div.className = "post";
     div.innerHTML = `
-      <p>${post.text}</p>
+      <p>${escapeHtml(post.text || "")}</p>
       ${post.image_url ? `<img src="${post.image_url}" alt="post image" />` : ""}
+      ${isAdmin ? `<button class="delete-btn" data-id="${post.id}">Delete</button>` : ""}
     `;
     container.appendChild(div);
   });
+
+  if (isAdmin) {
+    container.querySelectorAll(".delete-btn").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const id = e.currentTarget.dataset.id;
+        const { error: delErr } = await supabase.from("posts").delete().eq("id", id);
+        if (delErr) {
+          alert("Error deleting post: " + delErr.message);
+        } else {
+          await loadPosts();
+        }
+      });
+    });
+  }
+}
+
+// ---- small helper ----
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, (c) => (
+    { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]
+  ));
 }
