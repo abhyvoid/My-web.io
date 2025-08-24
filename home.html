@@ -25,15 +25,15 @@
     <div id="posts-container"></div>
   </div>
 
-  <!-- Floating Add Button (Admin Only) -->
-  <button id="add-post-toggle" class="hidden">+</button>
+  <!-- Floating + button (admin only, hidden by default) -->
+  <div id="add-post-circle" class="hidden">+</div>
 
-  <!-- Admin Controls -->
+  <!-- Admin Controls (hidden by default) -->
   <div id="admin-controls" class="hidden">
     <textarea id="post-text" placeholder="Write something..."></textarea>
     <input type="file" id="post-image">
-    <button id="add-post-btn">Add Post</button>
-    <button id="delete-post-btn">Delete Last Post</button>
+    <button id="add-post-btn" style="display:none">Add Post</button>
+    <button id="delete-post-btn" style="display:none">Delete Last Post</button>
   </div>
 
   <!-- Dark Mode Toggle -->
