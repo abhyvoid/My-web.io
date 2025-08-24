@@ -1,6 +1,6 @@
-// app.js (for index.html)
+// app.js (only login & signup)
 
-// Sign Up
+// Signup
 document.getElementById("signup-btn")?.addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -14,7 +14,7 @@ document.getElementById("signup-btn")?.addEventListener("click", async () => {
     document.getElementById("error-msg").innerText = error.message;
   } else {
     document.getElementById("error-msg").innerText =
-      "Signup successful! Check your email.";
+      "Signup successful! Please check your email.";
   }
 });
 
@@ -31,6 +31,6 @@ document.getElementById("login-btn")?.addEventListener("click", async () => {
   if (error) {
     document.getElementById("error-msg").innerText = error.message;
   } else {
-    window.location.href = "home.html"; // go to homepage
+    window.location.href = "home.html"; // redirect to home page
   }
 });
