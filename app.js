@@ -1,119 +1,36 @@
-    // On load check session
-supabase.auth.getSession().then(({ data: { session } }) => {
-  if (!session) {
-    window.location.href = "index.html";
-  } else {
-    loadPosts();
-    showAdminControls(session.user.email);
-  }
-});
+// app.js (for index.html)
 
-// Watch login/logout
-supabase.auth.onAuthStateChange((_event, session) => {
-  if (!session) {
-    window.location.href = "index.html";
-  } else {
-    loadPosts();
-    showAdminControls(session.user.email);
-  }
-});
+// Sign Up
+document.getElementById("signup-btn")?.addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-// Show admin-only
-function showAdminControls(email) {
-  const addCircle = document.getElementById("add-post-circle");
-  const addBtn = document.getElementById("add-post-btn");
-  const delBtn = document.getElementById("delete-post-btn");
-
-  if (email === "abhayrangappanvat@gmail.com") {
-    addCircle.classList.remove("hidden");
-    addBtn.style.display = "block";
-    delBtn.style.display = "block";
-  }
-}
-
-// Add Post
-document.getElementById("add-post-btn")?.addEventListener("click", async () => {
-  const text = document.getElementById("post-text").value;
-  const file = document.getElementById("post-image").files[0];
-  let imageUrl = "";
-
-  if (file) {
-    const { data, error } = await supabase.storage.from("images")
-      .upload(`posts/${Date.now()}-${file.name}`, file);
-    if (error) {
-      alert("Image upload failed");
-      return;
-    }
-    const { data: publicUrl } = supabase.storage.from("images").getPublicUrl(data.path);
-    imageUrl = publicUrl.publicUrl;
-  }
-
-  const { error } = await supabase.from("posts").insert([
-    { text, image_url: imageUrl, author: email }
-  ]);
+  const { data, error } = await supabase.auth.signUp({
+    email: email,
+    password: password,
+  });
 
   if (error) {
-    alert("Error adding post: " + error.message);
+    document.getElementById("error-msg").innerText = error.message;
   } else {
-    document.getElementById("post-text").value = "";
-    document.getElementById("post-image").value = "";
-    loadPosts();
+    document.getElementById("error-msg").innerText =
+      "Signup successful! Check your email.";
   }
 });
 
-// Load Posts
-async function loadPosts() {
-  const { data, error } = await supabase.from("posts")
-    .select("*")
-    .order("created_at", { ascending: false });
+// Login
+document.getElementById("login-btn")?.addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-  if (error) return console.error(error);
-
-  const container = document.getElementById("posts-container");
-  container.innerHTML = "";
-
-  const { data: { session } } = await supabase.auth.getSession();
-  const isAdmin = session?.user?.email === "abhayrangappanvat@gmail.com";
-
-  data.forEach((post) => {
-    const div = document.createElement("div");
-    div.classList.add("post");
-    div.innerHTML = `
-      <p>${post.text}</p>
-      ${post.image_url ? `<img src="${post.image_url}" alt="post image" />` : ""}
-      ${isAdmin ? `<button class="delete-btn" data-id="${post.id}">Delete</button>` : ""}
-    `;
-    container.appendChild(div);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password,
   });
 
-  // delete post events
-  document.querySelectorAll(".delete-btn").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
-      const id = e.target.dataset.id;
-      const { error } = await supabase.from("posts").delete().eq("id", id);
-      if (!error) loadPosts();
-    });
-  });
-}
-
-// Logout
-document.getElementById("logout-btn")?.addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  window.location.href = "index.html";
-});
-
-// Menu toggle
-document.getElementById("menu-btn")?.addEventListener("click", () => {
-  document.getElementById("side-menu").classList.toggle("hidden");
-});
-
-// Dark mode
-document.getElementById("dark-mode-toggle")?.addEventListener("click", () => {
-  document.body.classList.toggle("dark");
-  document.body.classList.toggle("light");
-});
-
-// Floating + button
-document.getElementById("add-post-circle")?.addEventListener("click", () => {
-  document.getElementById("admin-controls").classList.toggle("hidden");
+  if (error) {
+    document.getElementById("error-msg").innerText = error.message;
+  } else {
+    window.location.href = "home.html"; // go to homepage
+  }
 });
