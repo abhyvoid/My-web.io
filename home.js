@@ -21,14 +21,14 @@ function showAdminControls(email) {
 // Add Post
 document.getElementById("add-post-btn")?.addEventListener("click", async () => {
   const text = document.getElementById("post-text").value;
-  const file = document.getElementById("post-Image").files[0];
+  const file = document.getElementById("post-image").files[0]; // fixed ID (small i)
   let imageUrl = "";
 
   if (file) {
     // Upload to Supabase Storage
     const { data, error } = await supabase
       .storage
-      .from("Images")
+      .from("Images") // bucket name with capital I
       .upload(`posts/${Date.now()}-${file.name}`, file, { cacheControl: "3600", upsert: false });
 
     if (error) {
