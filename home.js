@@ -37,7 +37,7 @@ document.getElementById("add-post-btn")?.addEventListener("click", async () => {
     }
 
     // Get public URL
-    const { data: urlData } = supabase.storage.from("images").getPublicUrl(data.path);
+    const { data: urlData } = supabase.storage.from("Images").getPublicUrl(data.path);
     imageUrl = urlData.publicUrl;
   }
 
