@@ -1,5 +1,6 @@
-// ----- ROLE CONTROL -----
-let isAdmin = true; // Change to false for normal users
+    // ----- ROLE CONTROL -----
+// ✅ Now checks admin flag from localStorage (set during login/signup)
+let isAdmin = localStorage.getItem("isAdmin") === "true";
 
 // ----- Elements -----
 const addBtn = document.getElementById("addBtn");
