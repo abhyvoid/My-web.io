@@ -1,19 +1,69 @@
-      /* General */
+/* ------------------------------
+ Global
+------------------------------ */
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
-  color: #333;
+  background: #f4f4f4;
+  color: #222;
+  transition: background 0.3s, color 0.3s;
 }
 
-/* Navbar */
+a {
+  text-decoration: none;
+  color: inherit;
+  margin: 0 10px;
+}
+
+button {
+  cursor: pointer;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #007bff;
+  color: white;
+  font-size: 14px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+button:hover {
+  background: #0056b3;
+  transform: scale(1.05);
+}
+
+/* ------------------------------
+ Dark Mode
+------------------------------ */
+body.dark-mode {
+  background: #181818;
+  color: #f4f4f4;
+}
+
+body.dark-mode nav {
+  background: #222;
+}
+
+body.dark-mode button {
+  background: #444;
+}
+
+body.dark-mode button:hover {
+  background: #666;
+}
+
+/* ------------------------------
+ Navbar
+------------------------------ */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #222;
+  background: #007bff;
   color: white;
   padding: 10px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .navbar h1 {
@@ -21,72 +71,70 @@ body {
   font-size: 20px;
 }
 
-.navbar .nav-right a,
-.navbar .nav-right button {
-  color: white;
-  background: none;
-  border: none;
-  margin-left: 15px;
-  cursor: pointer;
-  font-size: 16px;
+.navbar .nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.navbar .nav-right a {
-  text-decoration: none;
-}
-
-/* Dark mode */
-body.dark-mode {
-  background: #111;
-  color: white;
-}
-
-body.dark-mode .navbar {
-  background: #333;
-}
-
-/* Posts */
+/* ------------------------------
+ Posts
+------------------------------ */
 .content {
   padding: 20px;
 }
 
 .post {
   background: white;
-  border-radius: 8px;
   padding: 15px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
 }
 
-body.dark-mode .post {
-  background: #222;
-  color: white;
+.post:hover {
+  transform: scale(1.01);
 }
 
-/* Floating button */
+.post img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+/* ------------------------------
+ Floating + Button
+------------------------------ */
 .floating-btn {
   position: fixed;
   bottom: 20px;
   right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
   font-size: 24px;
   background: #007bff;
   color: white;
-  border: none;
-  border-radius: 50%;
-  padding: 12px;
-  cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: transform 0.2s, background 0.2s;
 }
 
-/* Modal */
+.floating-btn:hover {
+  background: #0056b3;
+  transform: scale(1.1);
+}
+
+/* ------------------------------
+ Modal
+------------------------------ */
 .modal {
-  display: none;
+  display: none; /* hidden by default */
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 0; left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.5);
   justify-content: center;
   align-items: center;
 }
@@ -99,7 +147,11 @@ body.dark-mode .post {
   max-width: 400px;
 }
 
-body.dark-mode .modal-content {
-  background: #333;
-  color: white;
+.modal-content textarea {
+  width: 100%;
+  min-height: 80px;
+  margin-bottom: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
