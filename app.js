@@ -1,36 +1,56 @@
-// app.js (only login & signup)
+// app.js
 
-// Signup
-document.getElementById("signup-btn")?.addEventListener("click", async () => {
+// Sign Up function
+async function signup() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  const { data, error } = await supabase.auth.signUp({
-    email: email,
-    password: password,
-  });
-
+  let { user, error } = await supabase.auth.signUp({ email, password });
   if (error) {
-    document.getElementById("error-msg").innerText = error.message;
+    document.getElementById("message").innerText = error.message;
   } else {
-    document.getElementById("error-msg").innerText =
+    document.getElementById("message").innerText =
       "Signup successful! Please check your email.";
   }
-});
+}
 
-// Login
-document.getElementById("login-btn")?.addEventListener("click", async () => {
+// Login function
+async function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email,
-    password: password,
+  let { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
   });
 
   if (error) {
-    document.getElementById("error-msg").innerText = error.message;
+    document.getElementById("message").innerText = error.message;
   } else {
     window.location.href = "home.html"; // redirect to home page
   }
-});
+}
+
+// Logout function
+async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
+}
+
+/* -----------------------------
+   Show / Hide Password Toggle
+----------------------------- */
+const togglePassword = document.getElementById("toggle-password");
+if (togglePassword) {
+  togglePassword.addEventListener("click", () => {
+    const passwordField = document.getElementById("password");
+
+    if (passwordField.type === "password") {
+      passwordField.type = "text";
+      togglePassword.classList.add("active"); // adds blue inner circle
+    } else {
+      passwordField.type = "password";
+      togglePassword.classList.remove("active");
+    }
+  });
+}
