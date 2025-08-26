@@ -9,7 +9,13 @@
   <div class="login-container">
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
+
+    <!-- Password input with toggle -->
+    <div class="password-container">
+      <input type="password" id="password" placeholder="Password">
+      <div id="toggle-password" class="toggle-circle"></div>
+    </div>
+
     <button id="login-btn">Login</button>
     <button id="signup-btn">Sign Up</button>
     <p id="error-msg" class="error"></p>
