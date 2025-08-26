@@ -11,6 +11,13 @@ async function signup() {
     document.getElementById("error-msg").innerText = error.message;
     document.getElementById("error-msg").style.color = "red";
   } else {
+    // ✅ Check if this signup is the admin
+    if (email === "abhayrangappanvat@gmail.com") {
+      localStorage.setItem("isAdmin", "true");
+    } else {
+      localStorage.setItem("isAdmin", "false");
+    }
+
     document.getElementById("error-msg").innerText =
       "✅ Signup successful! Please check your email.";
     document.getElementById("error-msg").style.color = "green";
@@ -24,12 +31,19 @@ async function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  let { error } = await supabase.auth.signInWithPassword({ email, password });
+  let { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     document.getElementById("error-msg").innerText = error.message;
     document.getElementById("error-msg").style.color = "red";
   } else {
+    // ✅ Check if this login is the admin
+    if (email === "abhayrangappanvat@gmail.com") {
+      localStorage.setItem("isAdmin", "true");
+    } else {
+      localStorage.setItem("isAdmin", "false");
+    }
+
     window.location.href = "home.html"; // redirect to home page
   }
 }
@@ -39,6 +53,7 @@ async function login() {
 // -----------------------------
 async function logout() {
   await supabase.auth.signOut();
+  localStorage.removeItem("isAdmin"); // ✅ clear admin flag
   window.location.href = "index.html";
 }
 
