@@ -1,7 +1,7 @@
-  // ✅ Connect to Supabase
+// ✅ Connect Supabase
 const supabaseUrl = "YOUR_SUPABASE_URL";
 const supabaseKey = "YOUR_SUPABASE_KEY";
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 const ADMIN_EMAIL = "abhayrangappanvat@gmail.com";
 
@@ -14,16 +14,22 @@ const logoutBtn = document.getElementById("logout-btn");
 const darkModeToggle = document.getElementById("dark-mode-toggle");
 
 // -----------------------------
-// Check current user
+// Check user
 // -----------------------------
 async function checkUser() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    console.error("Auth error:", error.message);
+    window.location.href = "index.html";
+    return;
+  }
+  const user = data.user;
   if (!user) {
     window.location.href = "index.html";
     return;
   }
 
-  // Admin check
+  // Show + button only for admin
   if (user.email === ADMIN_EMAIL) {
     addPostBtn.style.display = "block";
   } else {
@@ -38,8 +44,12 @@ checkUser();
 // Logout
 // -----------------------------
 logoutBtn.addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  window.location.href = "index.html";
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    alert("Logout failed: " + error.message);
+  } else {
+    window.location.href = "index.html";
+  }
 });
 
 // -----------------------------
@@ -54,15 +64,24 @@ darkModeToggle.addEventListener("click", () => {
 // -----------------------------
 // Modal handling
 // -----------------------------
-addPostBtn.addEventListener("click", () => (modal.style.display = "block"));
-closeModalBtn.addEventListener("click", () => (modal.style.display = "none"));
+addPostBtn.addEventListener("click", () => {
+  modal.style.display = "block";
+});
+closeModalBtn.addEventListener("click", () => {
+  modal.style.display = "none";
+});
 
 // -----------------------------
-// Save new post (Admin only)
+// Save new post
 // -----------------------------
 savePostBtn.addEventListener("click", async () => {
-  const text = document.getElementById("post-text").value;
+  const text = document.getElementById("post-text").value.trim();
   const file = document.getElementById("post-image").files[0];
+
+  if (!text && !file) {
+    alert("Post cannot be empty");
+    return;
+  }
 
   let imageUrl = null;
   if (file) {
@@ -71,120 +90,23 @@ savePostBtn.addEventListener("click", async () => {
       .upload(`images/${Date.now()}_${file.name}`, file);
 
     if (error) {
-      alert("Error uploading image");
+      alert("Error uploading image: " + error.message);
       return;
     }
     imageUrl = `${supabaseUrl}/storage/v1/object/public/posts/${data.path}`;
   }
 
-  await supabase.from("posts").insert([{ content: text, image_url: imageUrl }]);
+  const { error } = await supabase
+    .from("posts")
+    .insert([{ content: text, image_url: imageUrl }]);
+
+  if (error) {
+    alert("Error saving post: " + error.message);
+    return;
+  }
+
   modal.style.display = "none";
   document.getElementById("post-text").value = "";
   document.getElementById("post-image").value = "";
   loadPosts();
 });
-
-// -----------------------------
-// Load posts
-// -----------------------------
-async function loadPosts() {
-  postsContainer.innerHTML = "";
-  const { data: posts, error } = await supabase
-    .from("posts")
-    .select("id, content, image_url, created_at")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Error loading posts:", error);
-    return;
-  }
-
-  posts.forEach((post) => {
-    renderPost(post);
-  });
-}
-
-// -----------------------------
-// Render a single post
-// -----------------------------
-async function renderPost(post) {
-  const postDiv = document.createElement("div");
-  postDiv.classList.add("post");
-
-  postDiv.innerHTML = `
-    <p>${post.content}</p>
-    ${post.image_url ? `<img src="${post.image_url}" alt="Post Image" />` : ""}
-    <button class="like-btn">❤️ Like</button>
-    <span class="like-count">0</span>
-    <div class="comments"></div>
-    <input type="text" class="comment-input" placeholder="Write a comment..." />
-    <button class="comment-btn">Comment</button>
-    <div class="admin-actions" style="display:none;">
-      <button class="delete-btn">🗑️ Delete</button>
-    </div>
-  `;
-
-  // Likes
-  const likeBtn = postDiv.querySelector(".like-btn");
-  const likeCount = postDiv.querySelector(".like-count");
-  likeBtn.addEventListener("click", async () => {
-    await supabase.from("likes").insert([{ post_id: post.id }]);
-    updateLikes(post.id, likeCount);
-  });
-  updateLikes(post.id, likeCount);
-
-  // Comments
-  const commentBtn = postDiv.querySelector(".comment-btn");
-  const commentInput = postDiv.querySelector(".comment-input");
-  const commentsDiv = postDiv.querySelector(".comments");
-
-  commentBtn.addEventListener("click", async () => {
-    const text = commentInput.value.trim();
-    if (!text) return;
-    await supabase.from("comments").insert([{ post_id: post.id, text }]);
-    commentInput.value = "";
-    loadComments(post.id, commentsDiv);
-  });
-  loadComments(post.id, commentsDiv);
-
-  // Admin delete
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user && user.email === ADMIN_EMAIL) {
-    postDiv.querySelector(".admin-actions").style.display = "block";
-    postDiv.querySelector(".delete-btn").addEventListener("click", async () => {
-      await supabase.from("posts").delete().eq("id", post.id);
-      loadPosts();
-    });
-  }
-
-  postsContainer.appendChild(postDiv);
-}
-
-// -----------------------------
-// Update likes
-// -----------------------------
-async function updateLikes(postId, likeCountEl) {
-  const { count } = await supabase
-    .from("likes")
-    .select("*", { count: "exact", head: true })
-    .eq("post_id", postId);
-  likeCountEl.textContent = count;
-}
-
-// -----------------------------
-// Load comments
-// -----------------------------
-async function loadComments(postId, container) {
-  container.innerHTML = "";
-  const { data: comments } = await supabase
-    .from("comments")
-    .select("text, created_at")
-    .eq("post_id", postId)
-    .order("created_at", { ascending: true });
-
-  comments.forEach((c) => {
-    const div = document.createElement("div");
-    div.textContent = c.text;
-    container.appendChild(div);
-  });
-}
