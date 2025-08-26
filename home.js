@@ -1,5 +1,4 @@
-// ----- ROLE CONTROL -----
-// ✅ Reads admin flag set in app.js during login/signup
+  // ----- ROLE CONTROL -----
 let isAdmin = localStorage.getItem("isAdmin") === "true";
 
 // ----- Elements -----
@@ -7,7 +6,7 @@ const addBtn = document.getElementById("addBtn");
 const addModal = document.getElementById("addModal");
 const postsContainer = document.getElementById("posts");
 
-// Show admin features that exist on initial load (like the + button)
+// Show admin features
 if (isAdmin) {
   document.querySelectorAll(".admin-only").forEach(el => (el.style.display = "block"));
 }
@@ -31,20 +30,39 @@ function closeModal() {
   addModal.style.display = "none";
 }
 
-function savePost() {
+async function savePost() {
   const text = document.getElementById("postText").value;
   const file = document.getElementById("postImage").files[0];
   let imgURL = "";
 
   if (file) {
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
       imgURL = e.target.result;
-      createPost(text, imgURL);
+
+      // ✅ Insert post into Supabase
+      const { error } = await supabase.from("posts").insert([
+        { text: text, image_url: imgURL, likes: 0 }
+      ]);
+
+      if (error) {
+        alert("Error adding post: " + error.message);
+      } else {
+        loadPosts(); // refresh posts list
+      }
     };
     reader.readAsDataURL(file);
   } else {
-    createPost(text, imgURL);
+    // ✅ Insert post into Supabase (text only)
+    const { error } = await supabase.from("posts").insert([
+      { text: text, image_url: null, likes: 0 }
+    ]);
+
+    if (error) {
+      alert("Error adding post: " + error.message);
+    } else {
+      loadPosts();
+    }
   }
 
   document.getElementById("postText").value = "";
@@ -52,54 +70,97 @@ function savePost() {
   closeModal();
 }
 
-// ----- Create Post -----
-// ✅ Delete button is now always rendered but hidden with .admin-only (like the + button)
-function createPost(text, imgURL) {
+// ----- Load Posts -----
+async function loadPosts() {
+  postsContainer.innerHTML = ""; // clear old
+
+  const { data, error } = await supabase.from("posts").select("*").order("id", { ascending: false });
+
+  if (error) {
+    console.error("Error loading posts:", error.message);
+    return;
+  }
+
+  data.forEach(postData => {
+    createPost(postData);
+  });
+}
+
+// ----- Create Post (with Supabase data) -----
+function createPost(postData) {
   const post = document.createElement("div");
   post.className = "post";
 
-  let content = `<p>${text}</p>`;
-  if (imgURL) {
-    content += `<img src="${imgURL}" alt="Post Image">`;
+  let content = `<p>${postData.text || ""}</p>`;
+  if (postData.image_url) {
+    content += `<img src="${postData.image_url}" alt="Post Image">`;
   }
 
   content += `
     <div class="actions">
-      <button class="likeBtn">❤️ <span>0</span></button>
+      <button class="likeBtn">❤️ <span>${postData.likes || 0}</span></button>
       <button class="commentBtn">💬</button>
-      <button class="deleteBtn admin-only">Delete</button> <!-- ✅ always present, hidden for non-admin -->
+      <button class="deleteBtn admin-only">Delete</button>
     </div>
     <div class="comments"></div>
   `;
 
   post.innerHTML = content;
-  postsContainer.prepend(post);
+  postsContainer.appendChild(post);
 
-  // ✅ If admin, reveal admin-only controls inside THIS newly created post
+  // Show admin controls if admin
   if (isAdmin) {
     post.querySelectorAll(".admin-only").forEach(el => (el.style.display = "inline-block"));
   }
 
-  // Like button
-  post.querySelector(".likeBtn").addEventListener("click", (e) => {
+  // Like button → update in Supabase
+  post.querySelector(".likeBtn").addEventListener("click", async (e) => {
     const span = e.target.querySelector("span");
-    span.textContent = parseInt(span.textContent) + 1;
+    const newLikes = parseInt(span.textContent) + 1;
+    span.textContent = newLikes;
+
+    await supabase.from("posts").update({ likes: newLikes }).eq("id", postData.id);
   });
 
-  // Comment button
-  post.querySelector(".commentBtn").addEventListener("click", () => {
+  // Comment button → insert into Supabase comments table
+  post.querySelector(".commentBtn").addEventListener("click", async () => {
     const comment = prompt("Enter your comment:");
     if (comment) {
       const div = post.querySelector(".comments");
       const p = document.createElement("p");
       p.textContent = comment;
       div.appendChild(p);
+
+      await supabase.from("comments").insert([
+        { post_id: postData.id, text: comment }
+      ]);
     }
   });
 
-  // ✅ Delete button (listener attached either way; button is hidden for non-admin)
+  // Load existing comments
+  loadComments(postData.id, post.querySelector(".comments"));
+
+  // Delete button (admin only)
   const delBtn = post.querySelector(".deleteBtn");
-  delBtn.addEventListener("click", () => {
-    post.remove();
+  delBtn.addEventListener("click", async () => {
+    if (confirm("Delete this post?")) {
+      await supabase.from("posts").delete().eq("id", postData.id);
+      post.remove();
+    }
   });
-      }
+}
+
+// ----- Load Comments -----
+async function loadComments(postId, commentsContainer) {
+  const { data, error } = await supabase.from("comments").select("*").eq("post_id", postId);
+  if (error) return console.error("Error loading comments:", error.message);
+
+  data.forEach(c => {
+    const p = document.createElement("p");
+    p.textContent = c.text;
+    commentsContainer.appendChild(p);
+  });
+}
+
+// ----- Initial Load -----
+loadPosts();
