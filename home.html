@@ -1,46 +1,45 @@
-
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MyWeb.io 🚀</title>
-  <link rel="stylesheet" href="style.css" />
+
+  <!-- ✅ Correct path for CSS -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Navbar -->
+
+  <!-- ✅ Navbar -->
   <nav class="navbar">
     <div class="nav-left">
-      <h1>MyWeb.io 🚀</h1>
+      <h2>MyWeb.io 🚀</h2>
     </div>
     <div class="nav-right">
       <a href="home.html">Home</a>
       <a href="profile.html">Profile</a>
-      <button id="dark-mode-toggle">🌞</button>
-      <button id="logout-btn">Logout</button>
+      <button id="darkModeToggle">🌙</button>
+      <button id="logout">Logout</button>
     </div>
   </nav>
 
-  <!-- Posts container -->
-  <main class="content">
-    <div id="posts"></div>
-  </main>
+  <!-- ✅ Floating Add Post button (admin only) -->
+  <button id="addPostBtn" class="floating-btn">+</button>
 
-  <!-- Floating add post button (visible only for admin) -->
-  <button id="add-post-btn" class="floating-btn">➕</button>
-
-  <!-- Add Post Modal -->
-  <div id="add-post-modal" class="modal">
-    <div class="modal-content">
-      <h2>Add New Post</h2>
-      <textarea id="post-text" placeholder="Write something..."></textarea>
-      <input type="file" id="post-image" accept="image/*" />
-      <button id="save-post-btn">Save</button>
-      <button id="close-modal-btn">Cancel</button>
-    </div>
+  <!-- ✅ Add New Post Form (hidden by default) -->
+  <div id="newPostForm" style="display:none;">
+    <h3>Add New Post</h3>
+    <input type="text" id="postContent" placeholder="What's on your mind?">
+    <input type="file" id="postImage">
+    <button id="savePost">Save</button>
+    <button id="cancelPost">Cancel</button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <!-- ✅ Posts container -->
+  <div id="postsContainer"></div>
+
+  <!-- ✅ Correct script order -->
+  <script src="supabase.js"></script>
   <script src="home.js"></script>
 </body>
 </html>
