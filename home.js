@@ -1,5 +1,5 @@
-    // ----- ROLE CONTROL -----
-// ✅ Now checks admin flag from localStorage (set during login/signup)
+// ----- ROLE CONTROL -----
+// ✅ Reads admin flag set in app.js during login/signup
 let isAdmin = localStorage.getItem("isAdmin") === "true";
 
 // ----- Elements -----
@@ -7,9 +7,9 @@ const addBtn = document.getElementById("addBtn");
 const addModal = document.getElementById("addModal");
 const postsContainer = document.getElementById("posts");
 
-// Show admin features
+// Show admin features that exist on initial load (like the + button)
 if (isAdmin) {
-  document.querySelectorAll(".admin-only").forEach(el => el.style.display = "block");
+  document.querySelectorAll(".admin-only").forEach(el => (el.style.display = "block"));
 }
 
 // ----- Sidebar -----
@@ -38,7 +38,7 @@ function savePost() {
 
   if (file) {
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       imgURL = e.target.result;
       createPost(text, imgURL);
     };
@@ -53,6 +53,7 @@ function savePost() {
 }
 
 // ----- Create Post -----
+// ✅ Delete button is now always rendered but hidden with .admin-only (like the + button)
 function createPost(text, imgURL) {
   const post = document.createElement("div");
   post.className = "post";
@@ -66,13 +67,18 @@ function createPost(text, imgURL) {
     <div class="actions">
       <button class="likeBtn">❤️ <span>0</span></button>
       <button class="commentBtn">💬</button>
-      ${isAdmin ? '<button class="deleteBtn">Delete</button>' : ""}
+      <button class="deleteBtn admin-only">Delete</button> <!-- ✅ always present, hidden for non-admin -->
     </div>
     <div class="comments"></div>
   `;
 
   post.innerHTML = content;
   postsContainer.prepend(post);
+
+  // ✅ If admin, reveal admin-only controls inside THIS newly created post
+  if (isAdmin) {
+    post.querySelectorAll(".admin-only").forEach(el => (el.style.display = "inline-block"));
+  }
 
   // Like button
   post.querySelector(".likeBtn").addEventListener("click", (e) => {
@@ -91,10 +97,9 @@ function createPost(text, imgURL) {
     }
   });
 
-  // Delete button (only admin)
-  if (isAdmin) {
-    post.querySelector(".deleteBtn").addEventListener("click", () => {
-      post.remove();
-    });
-  }
-}
+  // ✅ Delete button (listener attached either way; button is hidden for non-admin)
+  const delBtn = post.querySelector(".deleteBtn");
+  delBtn.addEventListener("click", () => {
+    post.remove();
+  });
+      }
