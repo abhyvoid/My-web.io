@@ -1,45 +1,50 @@
-// app.js
-
+// -----------------------------
 // Sign Up function
+// -----------------------------
 async function signup() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  let { user, error } = await supabase.auth.signUp({ email, password });
+  let { error } = await supabase.auth.signUp({ email, password });
+
   if (error) {
-    document.getElementById("message").innerText = error.message;
+    document.getElementById("error-msg").innerText = error.message;
+    document.getElementById("error-msg").style.color = "red";
   } else {
-    document.getElementById("message").innerText =
-      "Signup successful! Please check your email.";
+    document.getElementById("error-msg").innerText =
+      "✅ Signup successful! Please check your email.";
+    document.getElementById("error-msg").style.color = "green";
   }
 }
 
+// -----------------------------
 // Login function
+// -----------------------------
 async function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
-  let { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  let { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    document.getElementById("message").innerText = error.message;
+    document.getElementById("error-msg").innerText = error.message;
+    document.getElementById("error-msg").style.color = "red";
   } else {
     window.location.href = "home.html"; // redirect to home page
   }
 }
 
+// -----------------------------
 // Logout function
+// -----------------------------
 async function logout() {
   await supabase.auth.signOut();
   window.location.href = "index.html";
 }
 
-/* -----------------------------
-   Show / Hide Password Toggle
------------------------------ */
+// -----------------------------
+// Show / Hide Password Toggle
+// -----------------------------
 const togglePassword = document.getElementById("toggle-password");
 if (togglePassword) {
   togglePassword.addEventListener("click", () => {
@@ -47,10 +52,16 @@ if (togglePassword) {
 
     if (passwordField.type === "password") {
       passwordField.type = "text";
-      togglePassword.classList.add("active"); // adds blue inner circle
+      togglePassword.classList.add("active"); // fill circle with blue
     } else {
       passwordField.type = "password";
       togglePassword.classList.remove("active");
     }
   });
 }
+
+// -----------------------------
+// Attach Events
+// -----------------------------
+document.getElementById("login-btn")?.addEventListener("click", login);
+document.getElementById("signup-btn")?.addEventListener("click", signup);
